@@ -1,24 +1,67 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<meta charset="utf-8">
+		<meta charset="UTF-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<!-- Three Js -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js" integrity="sha512-yNJzAsg5JyP91u+sLHlUDULMBd3hmEiVkYeeN1cQBKaLZ7EyT6oH2u5THNIRM2Fu6VKcZJv+F/QAp1h/qzy9Ow==" crossorigin="anonymous"></script>
+		<!-- GLTFLoader.js -->
+		<script src="https://cdn.rawgit.com/mrdoob/three.js/master/examples/js/loaders/GLTFLoader.js"></script>
+		<!-- jQuery -->
+		<script src="https://code.jquery.com/jquery-3.6.0.js" integrity="sha256-H+K7U5CnXl1h5ywQfKtSj8PCmoN9aaq30gDh27Xc0jk=" crossorigin="anonymous"></script>
+		<!--OrbitControls-->
+		<script src="https://cdn.jsdelivr.net/npm/three@0.122.0/examples/js/controls/OrbitControls.min.js"></script>
+
 		<title>Rick&Morty Portal</title>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r79/three.min.js"></script>
 		<style>
-			body { margin: 0; }
+			body { 
+				margin: 0; 
+				}
 		</style>
 	</head>
 	<body>
-		<script>
+		<script type="module">
+			import * as THREE from './three.module.js';
+        	import { OrbitControls } from './OrbitControls.js';
+
             //ESCENA
 			const scene = new THREE.Scene();
 			scene.background = new THREE.Color("black");
-            //CAMARA
-			const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
 
+            //CAMARA
+			const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight,0.01, 30000);
+			camera.position.x = 3;
+			camera.position.z = 6;
+
+			//RENDERER
 			const renderer = new THREE.WebGLRenderer();
 			renderer.setSize( window.innerWidth, window.innerHeight );
 			document.body.appendChild( renderer.domElement );
+
+			//FONDO
+			const starGeometry = new THREE.Geometry();
+			for(let i = 0; i < 6000; i++) {
+				const star = new THREE.Vector3(
+					Math.random() * 600 - 300,
+					Math.random() * 600 - 300,
+					Math.random() * 600- 300
+				);
+				star.velocity = 0;
+				star.acceleration = 0.02;
+				starGeometry.vertices.push(star);
+			}
+
+			//ESTRELLAS
+			let sprite = new THREE.TextureLoader().load('star.png');
+			let starMaterial = new THREE.PointsMaterial({
+				color: 0xaaaaaa,
+				size: 0.7,
+				map: sprite
+			});
+
+			const stars = new THREE.Points(starGeometry,starMaterial);
+        	scene.add(stars);
 
 			//ESFERA
 			const geometry = new THREE.SphereGeometry(2, 32);
@@ -29,9 +72,53 @@
 			const sphere = new THREE.Mesh( geometry, material);
 			scene.add( sphere );
 
-			camera.position.z = 5;
+			//CIRCULO
+			/*const geometry = new THREE.CircleGeometry(2,32,0)
+			const material = new THREE.MeshBasicMaterial( { 
+				color: 0x00ff00, 
+				//wireframe: true
+			} );
+			const circle = new THREE.Mesh(geometry,material);
+			scene.add( circle );*/
 
-            renderer.render( scene, camera );
+			//CONTROLES
+			const controls = new OrbitControls( camera, renderer.domElement );
+
+			//RESPONSIVE
+			window.addEventListener('resize', redimensionar, false)
+			function redimensionar(){
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize = (window.innerWidth, window.innerHeight);
+				renderer.render( scene, camera );
+			}
+
+			//ANIMACIÓN
+			function animate() {
+				requestAnimationFrame( animate );
+
+				//circle.rotation.x += 0.01;
+				//circle.rotation.y += 0.01;
+
+				sphere.rotation.x += 0.01;
+				sphere.rotation.y += 0.01;
+
+				starGeometry.vertices.forEach(p=>{
+					p.velocity += p.acceleration;
+					p.y -= p.velocity;
+					if( p.y < -200) {
+						p.y = 200;
+						p.velocity = 0
+					}
+				});
+				starGeometry.verticesNeedUpdate = true;
+				stars.rotation.y += 0.002;
+				stars.rotation.x = -1.5;
+
+				renderer.render( scene, camera );
+			};
+
+			animate();
 
 		</script>
 	</body>
